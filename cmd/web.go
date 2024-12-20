@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/hirosassa/bqiam/metadata"
 	"github.com/spf13/cobra"
 )
 
@@ -45,7 +46,19 @@ func createHandler(cmd *cobra.Command) http.HandlerFunc {
 			fmt.Fprintf(w, "Please input user")
 			return
 		}
-		runCmdDataset(cmd, []string{user})
+		refreshCache(cmd) // refresh cache if needed
+
+		var ms metadata.Metas
+		if err := ms.Load(config.CacheFile); err != nil {
+			fmt.Fprintf(w, "CacheFile load error")
+			return
+		}
+
+		for _, m := range ms.Metas {
+			if m.Entity == user {
+				fmt.Fprintln(w, m.Project, m.Dataset, m.Role)
+			}
+		}
 	}
 
 }
